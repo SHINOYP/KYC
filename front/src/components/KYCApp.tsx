@@ -193,17 +193,39 @@ const ProgressBar = ({ currentStep, isLoading }) => {
 const ResultCard = ({ result }) => (
   <div className="bg-white border rounded-lg p-6 space-y-4">
     <div className="text-center">
-      <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-      <h2 className="text-2xl font-bold text-green-600 mb-2">Verification Complete!</h2>
+      {result.status === 'rejected' ? (
+        <>
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Verification Failed!</h2>
+        </>
+      ) : (
+        <>
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-green-600 mb-2">Verification {result.status}!</h2>
+        </>
+      )}
     </div>
 
     <div className="grid md:grid-cols-2 gap-4">
       <div className="space-y-2">
+
         <h3 className="font-semibold">Extracted Information:</h3>
         <div className="bg-gray-50 p-3 rounded text-sm space-y-1">
           <p><strong>Name:</strong> {result.extracted.name}</p>
           <p><strong>Date of Birth:</strong> {result.extracted.dob}</p>
           <p><strong>ID Number:</strong> {result.extracted.id_number}</p>
+          <p><strong>Document Type:</strong> {result.extracted.document_type}</p>
+          <p><strong>Verification Status:</strong> {result.status}</p>
+          {result.fraud_flags.flags.length > 0 && (
+            <div className="mt-2">
+              <h4 className="font-semibold">Fraud Flags:</h4>
+              <ul className="list-disc list-inside">
+                {result.fraud_flags.flags.map((flag, index) => (
+                  <li key={index} className="text-sm text-red-600">{flag}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 
@@ -240,7 +262,7 @@ const KYCApp = () => {
     error: null
   });
   const [apiHealth, setApiHealth] = useState({ status: 'unknown', lastChecked: null });
-
+  console.log("API Health:", verification);
   // Check API health on component mount
   React.useEffect(() => {
     checkApiHealth();
@@ -250,9 +272,7 @@ const KYCApp = () => {
     try {
       const response = await fetch('http://127.0.0.1:8000/api/v1/kyc/health', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
 
       if (response.ok) {
@@ -280,7 +300,7 @@ const KYCApp = () => {
   };
 
   const handleFilesSelect = (newFiles) => {
-    console.log('Files selected:', newFiles); // Debug log
+    console.log('Files selected:', newFiles);
     setFiles(newFiles);
     if (verification.result) {
       setVerification({
@@ -306,17 +326,15 @@ const KYCApp = () => {
     });
 
     try {
-      // Step 2: Uploading
+      // Uploading step
       setVerification(prev => ({ ...prev, step: 3 }));
 
-      // Create FormData for multipart/form-data request
       const formData = new FormData();
       formData.append('id_card', files.idCard);
       formData.append('selfie', files.selfie);
 
       console.log('Sending verification request...');
 
-      // Make actual API call
       const response = await fetch('http://127.0.0.1:8000/api/v1/kyc/verify', {
         method: 'POST',
         body: formData
@@ -329,7 +347,7 @@ const KYCApp = () => {
       const apiResult = await response.json();
       console.log('API Response:', apiResult);
 
-      // Transform API response to match our UI expectations
+      // Transform API response to match UI structure
       const transformedResult = {
         verification_id: apiResult.verification_id,
         success: apiResult.success,
@@ -339,9 +357,21 @@ const KYCApp = () => {
           id_number: apiResult.id_number || 'Unknown',
           document_type: apiResult.document_type || 'unknown'
         },
-        trust_score: apiResult.trust_score || 0,
-        face_confidence: apiResult.face_confidence || 0,
-        fraud_flags: apiResult.fraud_flags || {},
+        trust_score: apiResult.trust_score ?? 0,
+        face_confidence: apiResult.face_confidence ?? 0,
+        fraud_flags: {
+          has_fraud_indicators: apiResult.fraud_flags?.has_fraud_indicators ?? false,
+          risk_level: apiResult.fraud_flags?.risk_level || 'unknown',
+          flags: apiResult.fraud_flags?.flags || [],
+          summary: apiResult.fraud_flags?.summary || '',
+          details: {
+            age_validation: apiResult.fraud_flags?.details?.age_validation || {},
+            expiry_validation: apiResult.fraud_flags?.details?.expiry_validation || {},
+            name_validation: apiResult.fraud_flags?.details?.name_validation || {},
+            id_validation: apiResult.fraud_flags?.details?.id_validation || {},
+            consistency_issues: apiResult.fraud_flags?.details?.consistency_issues || []
+          }
+        },
         summary: apiResult.summary || 'Verification completed.',
         status: apiResult.status || 'completed',
         timestamp: apiResult.timestamp,
@@ -390,11 +420,16 @@ const KYCApp = () => {
             Secure, fast, and reliable identity verification using advanced AI technology
           </p>
 
-          {/* API Health Status */}
+          {/* API Health */}
           <div className="mt-4 flex items-center justify-center space-x-2">
-            <div className={`w-3 h-3 rounded-full ${apiHealth.status === 'healthy' ? 'bg-green-500' :
-              apiHealth.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'
-              }`} />
+            <div
+              className={`w-3 h-3 rounded-full ${apiHealth.status === 'healthy'
+                ? 'bg-green-500'
+                : apiHealth.status === 'error'
+                  ? 'bg-red-500'
+                  : 'bg-yellow-500'
+                }`}
+            />
             <span className="text-sm text-gray-600">
               API Status: {apiHealth.status === 'healthy' ? 'Online' :
                 apiHealth.status === 'error' ? 'Offline' : 'Checking...'}
@@ -411,10 +446,7 @@ const KYCApp = () => {
 
         {/* Progress Bar */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <ProgressBar
-            currentStep={verification.step}
-            isLoading={verification.isLoading}
-          />
+          <ProgressBar currentStep={verification.step} isLoading={verification.isLoading} />
         </div>
 
         {/* Error Alert */}
@@ -441,10 +473,7 @@ const KYCApp = () => {
         ) : (
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <FileUpload
-                onFilesSelect={handleFilesSelect}
-                isLoading={verification.isLoading}
-              />
+              <FileUpload onFilesSelect={handleFilesSelect} isLoading={verification.isLoading} />
             </div>
 
             {(files.idCard || files.selfie) && (

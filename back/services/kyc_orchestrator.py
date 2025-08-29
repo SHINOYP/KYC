@@ -3,6 +3,7 @@ from typing import Dict, Any
 from .aws_textract import extract_fields
 from .aws_rekognition import compare_faces, analyze_face_attributes
 from .fraud_rules import run_fraud_checks, validate_document_authenticity
+from services.trust_score import calculate_trust_score
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ async def run_kyc_pipeline(id_bytes: bytes, selfie_bytes: bytes) -> Dict[str, An
         fraud = await run_fraud_checks(extracted)
         result["fraud_checks"] = fraud
 
+
         # Step 3: Authenticity validation
         authenticity = await validate_document_authenticity(extracted)
         result["document_authenticity"] = authenticity
@@ -47,12 +49,21 @@ async def run_kyc_pipeline(id_bytes: bytes, selfie_bytes: bytes) -> Dict[str, An
             result["face_attributes"] = attributes
 
         # Step 5: Final decision logic
+                # Step 5: Final decision logic
         if fraud["risk_level"] == "high" or not authenticity["authentic"]:
             result["final_decision"] = "rejected"
         elif result["face_match_score"] < 75:
             result["final_decision"] = "rejected"
         else:
             result["final_decision"] = "approved"
+
+        # ✅ Step 6: Trust score calculation
+        result["trust_score"] = calculate_trust_score(
+            result["extracted_fields"],
+            result["face_match_score"],
+            result["fraud_checks"]
+        )
+
 
         logger.info(f"KYC completed with decision: {result['final_decision']}")
         return result

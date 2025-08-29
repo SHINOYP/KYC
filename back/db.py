@@ -141,8 +141,11 @@ class DatabaseConfig:
 db_config = DatabaseConfig()
 
 async def init_db():
-    """Initialize database connection"""
+    """Initialize database connection, but app should run even if DB is down"""
     await db_config.connect()
+    if not db_config.is_connected:
+        logger.warning("⚠️ Running in degraded mode: MongoDB not available")
+
 
 async def close_db():
     """Close database connection"""

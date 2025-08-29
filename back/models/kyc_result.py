@@ -8,7 +8,13 @@ class DocumentType(str, Enum):
     DRIVERS_LICENSE = "drivers_license"
     PASSPORT = "passport"
     NATIONAL_ID = "national_id"
+    AADHAAR = "aadhaar"
+    PAN = "pan"
+    VOTER_ID = "voter_id"
     UNKNOWN = "unknown"
+
+
+
 
 class RiskLevel(str, Enum):
     """Risk assessment levels"""

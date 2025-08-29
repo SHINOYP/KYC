@@ -11,10 +11,10 @@ class HuggingFaceService:
     def __init__(self):
         """Initialize Hugging Face LLM service"""
         self.api_key = os.getenv("HF_API_KEY", "hf_jYyQaEDFIXXYPUAfGRCmDdvRJQvFdnvmEOx")
-        self.model_id = os.getenv("HF_MODEL_ID", "deepseek-ai/DeepSeek-R1")
+        self.model_id = os.getenv("HF_MODEL_ID", "meta-llama/Meta-Llama-3-8B")
 
         # Generation parameters
-        self.max_tokens = 500
+        self.max_tokens = 800
         self.temperature = 0.3
         self.top_p = 0.9
 
@@ -67,45 +67,48 @@ class HuggingFaceService:
                                 fraud_flags: Dict[str, Any]) -> str:
         """Create compliance summary prompt for Hugging Face"""
         prompt = f"""
-Generate a professional KYC compliance summary based on the following information:
+                Generate a professional KYC compliance summary based on the following information:
 
-Document Details:
-- Name: {extracted_fields.get('name', 'N/A')}
-- Document Type: {extracted_fields.get('document_type', 'N/A')}
-- ID Number: {extracted_fields.get('id_number', 'N/A')}
-- Date of Birth: {extracted_fields.get('dob', 'N/A')}
-- Expiry Date: {extracted_fields.get('expiry_date', 'N/A')}
+                Document Details:
+                - Name: {extracted_fields.get('name', 'N/A')}
+                - Document Type: {extracted_fields.get('document_type', 'N/A')}
+                - ID Number: {extracted_fields.get('id_number', 'N/A')}
+                - Date of Birth: {extracted_fields.get('dob', 'N/A')}
+                - Expiry Date: {extracted_fields.get('expiry_date', 'N/A')}
 
-Verification Results:
-- Trust Score: {trust_score}/100
-- Risk Level: {fraud_flags.get('risk_level', 'unknown')}
-- Fraud Flags: {fraud_flags.get('flag_count', 0)}
+                Verification Results:
+                - Trust Score: {trust_score}/100
+                - Risk Level: {fraud_flags.get('risk_level', 'unknown')}
+                - Fraud Flags: {fraud_flags.get('flag_count', 0)}
+                Please provide a comprehensive compliance summary of at least 5 paragraphs,
+                covering document details, verification results, risk implications, regulatory 
+                considerations, and a clear final recommendation.
 
-Please provide a concise compliance summary including verification outcome and recommendation.
-"""
+                """
+        print(prompt)
         return prompt
 
     def _create_risk_assessment_prompt(self, extracted_fields: Dict[str, Any], 
                                      fraud_flags: Dict[str, Any]) -> str:
         """Create risk assessment prompt for Hugging Face"""
         prompt = f"""
-Generate a structured risk assessment for KYC verification:
+                Generate a structured risk assessment for KYC verification:
 
-Document Information:
-- Document Type: {extracted_fields.get('document_type', 'N/A')}
-- Extraction Confidence: {extracted_fields.get('extraction_confidence', 0)}%
+                Document Information:
+                - Document Type: {extracted_fields.get('document_type', 'N/A')}
+                - Extraction Confidence: {extracted_fields.get('extraction_confidence', 0)}%
 
-Fraud Detection:
-- Risk Level: {fraud_flags.get('risk_level', 'unknown')}
-- Flag Count: {fraud_flags.get('flag_count', 0)}
-- Detected Issues: {', '.join(fraud_flags.get('flags', []))}
+                Fraud Detection:
+                - Risk Level: {fraud_flags.get('risk_level', 'unknown')}
+                - Flag Count: {fraud_flags.get('flag_count', 0)}
+                - Detected Issues: {', '.join(fraud_flags.get('flags', []))}
 
-Please provide:
-RISK_SCORE: [1-10 scale]
-TOP_RISKS: [comma-separated list of main risks]
-MITIGATION: [recommended actions]
-REVIEW_TIME: [estimated time needed]
-"""
+                Please provide:
+                RISK_SCORE: [1-10 scale]
+                TOP_RISKS: [comma-separated list of main risks]
+                MITIGATION: [recommended actions]
+                REVIEW_TIME: [estimated time needed]
+                """
         return prompt
 
     def _determine_recommendation(self, trust_score: float, fraud_flags: Dict[str, Any]) -> str:
@@ -228,7 +231,7 @@ async def generate_summary(extracted_fields: Dict[str, Any],
         )
         
         # Try to get LLM-generated summary
-        llm_summary = await granite_service._call_hf_api(prompt, max_tokens=200)
+        llm_summary = await granite_service._call_hf_api(prompt, max_tokens=800)
         
         if llm_summary:
             # Clean up the response
@@ -252,9 +255,8 @@ async def generate_summary(extracted_fields: Dict[str, Any],
     except Exception as e:
         logger.error(f"Summary generation failed: {str(e)}")
         # Return basic fallback summary
-        return granite_service._generate_fallback_summary(
-            extracted_fields, trust_score, fraud_flags
-        )
+    # Temporary test
+    return "This is a much longer test summary that should appear in full in your JSON output. " * 20
 
 
 async def generate_risk_assessment(extracted_fields: Dict[str, Any], 

@@ -71,6 +71,89 @@ class TextractService:
         return text.strip()
     
     def _extract_specific_fields(self, all_text: str, kvs: Dict[str, str]) -> Dict[str, str]:
+        """Extract Aadhaar, PAN, or DL specific fields cleanly"""
+        extracted = {
+            'name': '',
+            'dob': '',
+            'id_number': '',
+            'document_type': '',
+            'expiry_date': '',
+            'issue_date': ''
+        }
+
+        text_lower = all_text.lower()
+
+        # Strict patterns
+        aadhaar_pattern = r"\b\d{4}\s\d{4}\s\d{4}\b"     # Aadhaar: 12 digits
+        pan_pattern = r"\b[A-Z]{5}[0-9]{4}[A-Z]\b"       # PAN: ABCDE1234F
+        dl_pattern = r"\b[A-Z]{2}\d{2}\s?\d{11}\b"       # DL: MH12 20202020202
+
+        dob_patterns = [
+            r"(?:dob|date of birth|birth)[:\s]*([\d]{1,2}[-/][\d]{1,2}[-/][\d]{2,4})"
+        ]
+
+        name_patterns = [
+            r"(?:name|given name|full name)[:\s]*([A-Za-z\s]+)"
+        ]
+
+        # ---------- Extract from KVPs (highest confidence) ----------
+        for key, value in kvs.items():
+            key_lower = key.lower().strip()
+            val = value.strip()
+
+            if any(term in key_lower for term in ['name', 'given', 'first', 'last']):
+                if not extracted['name'] and val and not re.search(r"\d", val):
+                    extracted['name'] = val
+
+            elif any(term in key_lower for term in ['dob', 'birth', 'born']):
+                if not extracted['dob'] and val:
+                    extracted['dob'] = self._normalize_date(val)
+
+            elif any(term in key_lower for term in ['id', 'license', 'number']):
+                if not extracted['id_number'] and val:
+                    extracted['id_number'] = val
+
+            elif any(term in key_lower for term in ['expiry', 'expires', 'valid']):
+                if not extracted['expiry_date'] and val:
+                    extracted['expiry_date'] = self._normalize_date(val)
+
+        # ---------- Fallback to regex ----------
+        if not extracted['name']:
+            for pattern in name_patterns:
+                match = re.search(pattern, all_text, re.IGNORECASE)
+                if match:
+                    candidate = match.group(1).strip()
+                    if candidate and not re.search(r"\d", candidate):  # reject dates/numbers
+                        extracted['name'] = candidate
+                        break
+
+        if not extracted['dob']:
+            for pattern in dob_patterns:
+                match = re.search(pattern, all_text, re.IGNORECASE)
+                if match:
+                    extracted['dob'] = self._normalize_date(match.group(1).strip())
+                    break
+
+        # ID detection: Aadhaar / PAN / DL only
+        if re.search(aadhaar_pattern, all_text):
+            extracted['document_type'] = 'aadhaar'
+            extracted['id_number'] = re.search(aadhaar_pattern, all_text).group(0).replace(" ", "")
+
+        elif re.search(pan_pattern, all_text):
+            extracted['document_type'] = 'pan'
+            extracted['id_number'] = re.search(pan_pattern, all_text).group(0)
+
+        elif re.search(dl_pattern, all_text) or 'driver' in text_lower or 'license' in text_lower:
+            extracted['document_type'] = 'drivers_license'
+            match = re.search(dl_pattern, all_text)
+            if match:
+                extracted['id_number'] = match.group(0)
+
+        else:
+            extracted['document_type'] = 'unknown'
+
+        return extracted
+
         """Extract specific fields using patterns and key-value pairs"""
         extracted = {
             'name': '',
@@ -82,19 +165,15 @@ class TextractService:
         }
         
         # Common patterns for different document types
-        name_patterns = [
-            r'Name[:\s]+([A-Za-z\s]+)',
-            r'Full Name[:\s]+([A-Za-z\s]+)',
-            r'Given Name[:\s]+([A-Za-z\s]+)',
-        ]
-        
+
         dob_patterns = [
-            r'DOB[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{4})',
-            r'Date of Birth[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{4})',
-            r'Born[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{4})',
-            r'(\d{1,2}[/-]\d{1,2}[/-]\d{4})'  # General date pattern
+            r"(?:dob|date of birth|birth)[:\s]*([\d]{1,2}[-/][\d]{1,2}[-/][\d]{2,4})"
         ]
-        
+
+    # NAME patterns (force only alphabetic, avoid dates/numbers)
+        name_patterns = [
+            r"(?:name|given name|full name)[:\s]*([A-Za-z\s]+)"
+        ]
         id_patterns = [
             r'ID[:\s]+([A-Z0-9]+)',
             r'License[:\s]+([A-Z0-9]+)',
@@ -146,14 +225,31 @@ class TextractService:
         
         # Detect document type
         text_lower = all_text.lower()
-        if 'driver' in text_lower or 'license' in text_lower:
+               # Detect document type (Aadhaar, PAN, Driver's License only)
+        aadhaar_pattern = r"\b\d{4}\s\d{4}\s\d{4}\b"   # Aadhaar: 12 digits grouped
+        pan_pattern = r"\b[A-Z]{5}[0-9]{4}[A-Z]\b"     # PAN: 5 letters + 4 digits + 1 letter
+        dl_pattern = r"\b[A-Z]{2}\d{2}\s?\d{11}\b"     # DL: e.g., MH12 20202020202 (varies by state)
+
+        if re.search(aadhaar_pattern, all_text):
+            extracted['document_type'] = 'aadhaar'
+            if not extracted['id_number']:
+                extracted['id_number'] = re.search(aadhaar_pattern, all_text).group(0).replace(" ", "")
+
+        elif re.search(pan_pattern, all_text):
+            extracted['document_type'] = 'pan'
+            if not extracted['id_number']:
+                extracted['id_number'] = re.search(pan_pattern, all_text).group(0)
+
+        elif re.search(dl_pattern, all_text) or 'driver' in text_lower or 'license' in text_lower:
             extracted['document_type'] = 'drivers_license'
-        elif 'passport' in text_lower:
-            extracted['document_type'] = 'passport'
-        elif 'id card' in text_lower or 'identity' in text_lower:
-            extracted['document_type'] = 'national_id'
+            if not extracted['id_number']:
+                match = re.search(dl_pattern, all_text)
+                if match:
+                    extracted['id_number'] = match.group(0)
+
         else:
             extracted['document_type'] = 'unknown'
+
         
         return extracted
     
