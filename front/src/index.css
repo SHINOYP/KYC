@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* KYC Verification System Design System - Professional Fintech Theme */
+
+@layer base {
+  :root {
+    /* Core Background & Foreground */
+    --background: 240 13% 98%;
+    --foreground: 210 24% 16%;
+
+    /* Cards & Surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 210 24% 16%;
+
+    /* Popover & Modals */
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 24% 16%;
+
+    /* Brand Primary - Professional Blue */
+    --primary: 213 93% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 213 93% 70%;
+
+    /* Secondary - Soft Gray */
+    --secondary: 210 25% 96%;
+    --secondary-foreground: 210 24% 16%;
+
+    /* Muted Tones */
+    --muted: 210 25% 96%;
+    --muted-foreground: 210 10% 50%;
+
+    /* Accent - Complementary */
+    --accent: 200 95% 92%;
+    --accent-foreground: 200 95% 30%;
+
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 69% 58%;
+    
+    --warning: 43 96% 56%;
+    --warning-foreground: 30 70% 15%;
+    --warning-light: 43 89% 70%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-light: 0 84% 70%;
+
+    /* Borders & Inputs */
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 213 93% 55%;
+
+    /* Trust Score Colors */
+    --trust-high: 142 76% 36%;
+    --trust-medium: 43 96% 56%;
+    --trust-low: 0 84% 60%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(213 93% 55%), hsl(213 93% 70%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 69% 58%));
+    --gradient-hero: linear-gradient(135deg, hsl(213 93% 55%) 0%, hsl(200 95% 60%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 25% 98%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 6px -1px hsl(210 24% 16% / 0.1), 0 2px 4px -1px hsl(210 24% 16% / 0.06);
+    --shadow-medium: 0 10px 15px -3px hsl(210 24% 16% / 0.1), 0 4px 6px -2px hsl(210 24% 16% / 0.05);
+    --shadow-large: 0 20px 25px -5px hsl(210 24% 16% / 0.1), 0 10px 10px -5px hsl(210 24% 16% / 0.04);
+    --shadow-glow: 0 0 0 1px hsl(213 93% 55% / 0.05), 0 0 20px hsl(213 93% 55% / 0.1);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark mode optimized for professional use */
+    --background: 210 24% 8%;
+    --foreground: 210 25% 95%;
+
+    --card: 210 24% 10%;
+    --card-foreground: 210 25% 95%;
+
+    --popover: 210 24% 10%;
+    --popover-foreground: 210 25% 95%;
+
+    --primary: 213 93% 65%;
+    --primary-foreground: 210 24% 8%;
+    --primary-light: 213 93% 75%;
+
+    --secondary: 210 24% 15%;
+    --secondary-foreground: 210 25% 95%;
+
+    --muted: 210 24% 15%;
+    --muted-foreground: 210 15% 65%;
+
+    --accent: 200 95% 15%;
+    --accent-foreground: 200 95% 85%;
+
+    --success: 142 69% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 69% 60%;
+    
+    --warning: 43 89% 65%;
+    --warning-foreground: 30 70% 15%;
+    --warning-light: 43 89% 75%;
+    
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-light: 0 84% 75%;
+
+    --border: 210 24% 20%;
+    --input: 210 24% 20%;
+    --ring: 213 93% 65%;
+
+    --trust-high: 142 69% 45%;
+    --trust-medium: 43 89% 65%;
+    --trust-low: 0 84% 65%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(213 93% 65%), hsl(213 93% 75%));
+    --gradient-success: linear-gradient(135deg, hsl(142 69% 45%), hsl(142 69% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(213 93% 65%) 0%, hsl(200 95% 70%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(210 24% 10%) 0%, hsl(210 24% 12%) 100%);
+
+    --shadow-soft: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -1px hsl(0 0% 0% / 0.2);
+    --shadow-medium: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -2px hsl(0 0% 0% / 0.2);
+    --shadow-large: 0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 10px 10px -5px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 0 1px hsl(213 93% 65% / 0.1), 0 0 20px hsl(213 93% 65% / 0.2);
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter antialiased;
+  }
+}
+
+@layer components {
+  /* Upload Area Styles */
+  .upload-area {
+    @apply relative border-2 border-dashed border-border rounded-lg p-8 transition-all duration-300;
+    @apply hover:border-primary/50 hover:bg-accent/20;
+  }
+
+  .upload-area.drag-active {
+    @apply border-primary bg-accent/30 transform scale-[1.02];
+  }
+
+  /* Trust Score Styles */
+  .trust-score-high {
+    @apply bg-gradient-to-r from-green-500 to-green-400 text-white;
+  }
+
+  .trust-score-medium {
+    @apply bg-gradient-to-r from-yellow-500 to-yellow-400 text-white;
+  }
+
+  .trust-score-low {
+    @apply bg-gradient-to-r from-red-500 to-red-400 text-white;
+  }
+
+  /* Glass Effect */
+  .glass-card {
+    @apply backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 border border-white/20;
+  }
+
+  /* Progress Steps */
+  .step-indicator {
+    @apply flex items-center space-x-2 text-sm font-medium;
+  }
+
+  .step-indicator.active {
+    @apply text-primary;
+  }
+
+  .step-indicator.completed {
+    @apply text-success;
+  }
+
+  /* Custom Animations */
+  .fade-in {
+    @apply animate-in fade-in-50 duration-500;
+  }
+
+  .slide-up {
+    @apply animate-in slide-in-from-bottom-4 duration-500;
+  }
+
+  .bounce-in {
+    @apply animate-in zoom-in-95 duration-300;
+  }
+}
